@@ -1,10 +1,10 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Codec.Archive.WriteSpec where
+module Codec.Archive.SimpleSpec where
 
 import Codec.Archive.Types ( Compression (Gzip), Format (PaxRestricted)
                            , Filetype (RegularFile), EntryStat (..) )
-import Codec.Archive.Write (withWriteArchive, addRegularBytes, addFromDisk)
+import Codec.Archive.Simple (withWriteArchive, addRegularBytes, addFromDisk)
 
 import Codec.Archive (sourceArchive)
 import Codec.Archive.Read (readArchive, getNextEntry, archiveReadFree)
@@ -17,6 +17,8 @@ import System.FilePath ((</>))
 import System.IO.Temp (withSystemTempDirectory)
 
 import Test.Hspec
+
+-- TODO: tests for reading
 
 findFile :: FilePath -> FilePath -> IO (Maybe BS.ByteString)
 findFile tar ap = runResourceT $ fmap snd <$> (sourceArchive tar $$ findC ((== ap) . fst))
@@ -39,7 +41,7 @@ spec = do
         it "writes a file from disk to an archive" $
             withSystemTempDirectory "writespec" $ \tmp -> do
                 let ap  = "AnotherName.hs"
-                    fp  = "test/Codec/Archive/WriteSpec.hs"
+                    fp  = "test/Codec/Archive/SimpleSpec.hs"
                     tar = tmp </> "test.tar"
                 bs <- BS.readFile fp
                 withWriteArchive PaxRestricted Gzip tar $ \archive ->

@@ -17,8 +17,8 @@ library
   build-tools:         hsc2hs
   exposed-modules:     Codec.Archive.FFI
                      , Codec.Archive.Internal
+                     , Codec.Archive.Simple
                      , Codec.Archive.Types
-                     , Codec.Archive.Write
   build-depends:       base >= 4.7 && < 5
                      , bytestring
                      , monad-loops
@@ -30,6 +30,7 @@ test-suite spec
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
+  other-modules:       Codec.Archive.SimpleSpec
   build-depends:       base
                      , bindings-libarchive
                      , hspec

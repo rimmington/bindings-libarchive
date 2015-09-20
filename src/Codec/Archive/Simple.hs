@@ -13,34 +13,35 @@ Portability : unportable (POSIX)
 Simple archive writing.
 -}
 
-module Codec.Archive.Write ( ArchivePtr
-                           , withWriteArchive, addFromDisk, addRegularBytes ) where
-
--- TODO: rename to Simple, add reading
+module Codec.Archive.Simple ( Archive, Reading, Writing
+                            , withWriteArchive, addFromDisk, addRegularBytes
+                            , withReadArchive, readNextEntry ) where
 
 import Codec.Archive.FFI
 import Codec.Archive.Internal
 import Codec.Archive.Types
 
-import Control.Exception (bracket)
+import Control.Exception (bracket, bracketOnError)
 import Control.Monad ((<=<), when)
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
-import Data.ByteString.Unsafe (unsafeUseAsCString)
+import Data.ByteString.Unsafe (unsafeUseAsCString, unsafePackMallocCStringLen)
 import Data.Foldable (forM_)
-import Foreign (Ptr, nullPtr, allocaBytes, castPtr)
+import Data.Word (Word8)
+import Foreign (Ptr, nullPtr, allocaBytes, castPtr, free, mallocBytes)
 import Foreign.C.String (withCString)
 import Foreign.C.Types (CSize)
 import System.Posix.IO (closeFd)
 import System.Posix.Types (Fd (Fd))
 
--- TODO: move to Simple, use Free?
--- TODO: mark as writing or reading
--- | The tiniest abstraction.
-newtype ArchivePtr = AP (Ptr PArchive)
+data Reading
+data Writing
+
+-- | A mutable archive.
+newtype Archive s = AP (Ptr PArchive)
 
 -- | Run some action with a new archive on disk.
-withWriteArchive :: Format -> Compression -> FilePath -> (ArchivePtr -> IO a) -> IO a
+withWriteArchive :: Format -> Compression -> FilePath -> (Archive Writing -> IO a) -> IO a
 withWriteArchive format comp path f = bracket archiveWriteNew archiveWriteFree go
   where
     go archive = do
@@ -51,14 +52,13 @@ withWriteArchive format comp path f = bracket archiveWriteNew archiveWriteFree g
         ensureSuccess archive =<< archiveWriteClose archive
         pure r
 
--- TODO: writeArchiveFiles?
 -- | Add an on-disk file to the archive. Doesn't check if you're adding eg. a socket.
-addFromDisk :: ArchivePtr
+addFromDisk :: Archive Writing
             -> FilePath   -- ^ The on-disk path
             -> FilePath   -- ^ The archive path
             -> IO ()
 addFromDisk (AP archive) fp ap = bracket archiveReadDiskNew archiveReadFree $ \ard ->
-    bracket archiveEntryNew archiveEntryFree $ \entry -> do
+    withEntry $ \entry -> do
         ensureSuccess ard =<< archiveReadDiskSetStandardLookup ard
         withCString fp $ \cfp -> do
             archiveEntryCopyPathname entry cfp
@@ -76,7 +76,7 @@ addFromDisk (AP archive) fp ap = bracket archiveReadDiskNew archiveReadFree $ \a
 
 -- | Add a regular file to the archive. The 'entryLength' is ignored and
 -- 'BS.length' used instead.
-addRegularBytes :: ArchivePtr -> EntryStat -> ByteString -> IO ()
+addRegularBytes :: Archive Writing -> EntryStat -> ByteString -> IO ()
 addRegularBytes (AP archive) stat bs = bracket archiveEntryNew archiveEntryFree $ \entry -> do
     let len   = BS.length bs
     setEntry entry $ stat { entryLength = (fromIntegral len) }
@@ -87,3 +87,33 @@ addRegularBytes (AP archive) stat bs = bracket archiveEntryNew archiveEntryFree 
 
 -- TODO: addSymlink
 -- TODO: addDirectory
+
+withReadArchive :: FilePath -> (Archive Reading -> IO a) -> IO a
+withReadArchive fp f = bracket
+    archiveReadNew
+    (\ar -> ensureSuccess ar =<< archiveReadFree ar)
+    $ \ar -> do
+        openDiskArchive ar fp
+        f (AP ar)
+
+readNextEntry :: Archive Reading -> IO (Maybe (EntryStat, ByteString))
+readNextEntry (AP ar) = withEntry $ \entry -> do
+    eof <- fmap isEof . ensuringSuccess ar =<< archiveReadNextHeader2 ar entry
+    if eof
+        then pure Nothing
+        else do
+            stat <- readEntry entry
+            let len = entryLength stat
+            bs <- mkNewByteString (fromIntegral len) $ \ptr -> do
+                bytesRead <- ensuringSuccess ar =<< archiveReadData ar ptr (fromIntegral len)
+                when (bytesRead /= fromIntegral len) $ error "readNextEntry: did not read all bytes"
+            pure $ Just (stat, bs)
+
+withEntry :: (Ptr PEntry -> IO a) -> IO a
+withEntry = bracket archiveEntryNew archiveEntryFree
+
+mkNewByteString :: Int -> (Ptr Word8 -> IO ()) -> IO ByteString
+mkNewByteString len f = bracketOnError
+    (mallocBytes len)
+    free
+    (\ptr -> f ptr *> unsafePackMallocCStringLen (castPtr ptr, len))
