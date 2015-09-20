@@ -98,7 +98,7 @@ openDiskArchive ar fp = do
         ensureSuccess ar =<< archiveReadOpenFilename ar cfp (64 * 1024)
 
 -- | Populate an 'EntryStat' with metadata from a 'PEntry'.
-readEntry :: Ptr PEntry -> IO (EntryStat ())
+readEntry :: Ptr PEntry -> IO EntryStat
 readEntry ent = do
     ap     <- peekCString =<< archiveEntryPathname ent
     len    <- archiveEntrySize ent
@@ -107,10 +107,10 @@ readEntry ent = do
     perm'  <- archiveEntryPerm ent
     mtime' <- (,) <$> archiveEntryMtime ent <*> archiveEntryMtimeNsec ent
     ftype  <- toFiletype <$> archiveEntryFiletype ent
-    pure $ EntryStat ap ftype uid' gid' perm' mtime' len ()
+    pure $ EntryStat ap ftype uid' gid' perm' mtime' len
 
 -- | Set metadata from the 'EntryStat' to the 'PEntry'.
-setEntry :: Ptr PEntry -> EntryStat a -> IO ()
+setEntry :: Ptr PEntry -> EntryStat -> IO ()
 setEntry entry stat = do
     setPathname (archivePath stat) entry
     archiveEntrySetSize entry (entryLength stat)

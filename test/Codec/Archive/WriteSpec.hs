@@ -2,9 +2,9 @@
 
 module Codec.Archive.WriteSpec where
 
-import Codec.Archive.Write ( Compression (Gzip), Format (PaxRestricted)
-                           , withWriteArchive, addRegularBytes, addFromDisk
-                           , bytesStat )
+import Codec.Archive.Types ( Compression (Gzip), Format (PaxRestricted)
+                           , Filetype (RegularFile), EntryStat (..) )
+import Codec.Archive.Write (withWriteArchive, addRegularBytes, addFromDisk)
 
 import Codec.Archive (sourceArchive)
 import Codec.Archive.Read (readArchive, getNextEntry, archiveReadFree)
@@ -29,8 +29,9 @@ spec = do
                 let bs  = "{\"something\":1}"
                     tar = tmp </> "test.tar"
                     ap  = "manifest"
+                    st  = EntryStat ap RegularFile 0 0 0o644 (0, 0) 0
                 withWriteArchive PaxRestricted Gzip tar $ \archive ->
-                    addRegularBytes archive $ bytesStat ap bs
+                    addRegularBytes archive st bs
                 mbs <- findFile tar ap
                 mbs `shouldBe` Just bs
 

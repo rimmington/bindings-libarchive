@@ -17,7 +17,7 @@ module Codec.Archive.Types (
     -- * Archive parameters
       Compression (..), Format (..)
     -- * 'EntryStat' and friends
-    , EntryStat (..), defEntryStat
+    , EntryStat (..)
     , CInt64
     , Filetype (..)
     , toFiletype, fromFiletype
@@ -53,24 +53,15 @@ data Filetype = Socket | SymbolicLink | RegularFile | BlockDevice | Directory
 -- TODO: expose symlink targets
 -- TODO: handle device numbers
 -- TODO: mark Entry(Content) fields strict?
--- | Details about an archive entry, including content.
-data EntryStat a = EntryStat { archivePath :: FilePath
-                             , filetype    :: Filetype
-                             , uid         :: UserID
-                             , gid         :: GroupID
-                             , perm        :: FileMode
-                             , mtime       :: (EpochTime, CLong)
-                             , entryLength :: CInt64
-                             , content     :: a }
-                             deriving (Show, Eq)
-
--- | An 'EntryStat' for minimal effort.
---
--- @
--- defEntryStat ap = EntryStat ap 'RegularFile' 0 0 0o644 (0, 0)
--- @
-defEntryStat :: FilePath -> CInt64 -> a -> EntryStat a
-defEntryStat ap = EntryStat ap RegularFile 0 0 0o644 (0, 0)
+-- | Details about an archive entry.
+data EntryStat = EntryStat { archivePath :: FilePath
+                           , filetype    :: Filetype
+                           , uid         :: UserID
+                           , gid         :: GroupID
+                           , perm        :: FileMode
+                           , mtime       :: (EpochTime, CLong)
+                           , entryLength :: CInt64 }
+                           deriving (Show, Eq)
 
 -- | Convert the output of 'Codec.Archive.FFI.archiveEntryFiletype' to a
 -- 'Filetype'. No bitmasking is done, so this isn't suitable to use directly

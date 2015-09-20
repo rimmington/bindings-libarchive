@@ -13,9 +13,7 @@ Portability : unportable (POSIX)
 Simple archive writing.
 -}
 
-module Codec.Archive.Write ( Compression (..), Format (..), Filetype (..)
-                           , ArchivePtr
-                           , bytesStat
+module Codec.Archive.Write ( ArchivePtr
                            , withWriteArchive, addFromDisk, addRegularBytes ) where
 
 -- TODO: rename to Simple, add reading
@@ -77,16 +75,11 @@ addFromDisk (AP archive) fp ap = bracket archiveReadDiskNew archiveReadFree $ \a
                     allocaBytes (fromIntegral defaultBuffer) $ \buf ->
                         writeFileData archive fd buf defaultBuffer
 
--- | 'defEntryStat' for 'ByteString'.
-bytesStat :: FilePath -> ByteString -> EntryStat ByteString
-bytesStat ap bs = defEntryStat ap (fromIntegral $ BS.length bs) bs
-
 -- | Add a regular file to the archive. The 'entryLength' is ignored and
 -- 'BS.length' used instead.
-addRegularBytes :: ArchivePtr -> EntryStat ByteString -> IO ()
-addRegularBytes (AP archive) stat = bracket archiveEntryNew archiveEntryFree $ \entry -> do
+addRegularBytes :: ArchivePtr -> EntryStat -> ByteString -> IO ()
+addRegularBytes (AP archive) stat bs = bracket archiveEntryNew archiveEntryFree $ \entry -> do
     let len   = BS.length bs
-        bs    = content stat
     setEntry entry $ stat { entryLength = (fromIntegral len) }
     ensureSuccess archive =<< archiveWriteHeader archive entry
     bytesWritten <- ensuringSuccess archive <=< unsafeUseAsCString bs $ \buf ->
