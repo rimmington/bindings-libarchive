@@ -71,8 +71,8 @@ writeFileData :: Ptr Archive -> Fd -> Ptr Word8 -> CSize -> IO ()
 writeFileData archive fd buf bufSize = void $ iterateUntilM (== 0) (doWrite >=> const doRead) =<< doRead
   where
     doWrite bytesRead = do
-        bytesWritten <- archiveWriteData archive buf bytesRead
-        ensureSuccess archive $ fromIntegral bytesWritten
+        bytesWritten <- ensuringSuccess archive =<< archiveWriteData archive buf bytesRead
+        -- TODO: this is probably not the correct response
         when (fromIntegral bytesRead /= bytesWritten) $ error "writeFileData: bytesRead /= bytesWritten"
     doRead            = fdReadBuf fd (castPtr buf) bufSize
 
@@ -132,10 +132,9 @@ isEof = (== archive_eof)
 ensureSuccess :: Ptr Archive -> CInt -> IO ()
 ensureSuccess a = void . ensuringSuccess a
 
--- TODO: param over Num
 -- | Throw an 'ArchiveException' with libarchive error details if the result
 -- was negative. Use like @ensuringSuccess archive =<< archiveFFICall archive foo@.
-ensuringSuccess :: Ptr Archive -> CInt -> IO CInt
+ensuringSuccess :: (Num r, Ord r) => Ptr Archive -> r -> IO r
 ensuringSuccess a v
     | v >= 0    = pure v
     | otherwise = throwArchiveException a

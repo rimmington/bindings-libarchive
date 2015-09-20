@@ -64,7 +64,7 @@ addFromDisk (AP archive) fp ap = bracket archiveReadDiskNew archiveReadFree $ \a
         ensureSuccess ard =<< archiveReadDiskSetStandardLookup ard
         withCString fp $ \cfp -> do
             archiveEntryCopyPathname entry cfp
-            bracket (openReadOnlyFdNoFollow cfp) (maybe (pure ()) closeFd) $ \mfd -> do
+            bracket (openReadOnlyFdNoFollow cfp) (mapM_ closeFd) $ \mfd -> do
                 let fdi = case mfd of
                         Just (Fd i) -> i
                         Nothing     -> -1
@@ -80,19 +80,17 @@ addFromDisk (AP archive) fp ap = bracket archiveReadDiskNew archiveReadFree $ \a
 bytesStat :: FilePath -> ByteString -> EntryStat ByteString
 bytesStat ap bs = defEntryStat ap (fromIntegral $ BS.length bs) bs
 
--- TODO: see if fromIntegral calls can be reduced
 -- | Add a regular file to the archive. The 'entryLength' is ignored and
 -- 'BS.length' used instead.
 addRegularBytes :: ArchivePtr -> EntryStat ByteString -> IO ()
 addRegularBytes (AP archive) stat = bracket archiveEntryNew archiveEntryFree $ \entry -> do
-    let len   = fromIntegral (BS.length bs) :: CInt64
-        cslen = fromIntegral len :: CSize
+    let len   = BS.length bs
         bs    = content stat
-    setEntry entry $ stat { entryLength = len }
+    setEntry entry $ stat { entryLength = (fromIntegral len) }
     ensureSuccess archive =<< archiveWriteHeader archive entry
-    bytesWritten <- unsafeUseAsCString bs $ \buf -> archiveWriteData archive (castPtr buf) cslen
-    ensureSuccess archive $ fromIntegral bytesWritten
-    when (fromIntegral cslen /= bytesWritten) $ error "addRegularBytes: did not write all bytes"
+    bytesWritten <- ensuringSuccess archive <=< unsafeUseAsCString bs $ \buf ->
+        archiveWriteData archive (castPtr buf) (fromIntegral len)
+    when (fromIntegral len /= bytesWritten) $ error "addRegularBytes: did not write all bytes"
 
 -- TODO: addSymlink
 -- TODO: addDirectory
