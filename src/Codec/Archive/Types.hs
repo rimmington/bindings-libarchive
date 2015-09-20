@@ -49,7 +49,10 @@ data Filetype = Socket | SymbolicLink | RegularFile | BlockDevice | Directory
               | CharacterDevice | FIFO | Unknown CMode
               deriving (Show, Eq)
 
--- TODO: mark EntryStat fields strict?
+-- TODO: handle hard links: https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryLinkify3
+-- TODO: expose symlink targets
+-- TODO: handle device numbers
+-- TODO: mark Entry(Content) fields strict?
 -- | Details about an archive entry, including content.
 data EntryStat a = EntryStat { archivePath :: FilePath
                              , filetype    :: Filetype

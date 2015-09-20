@@ -34,88 +34,88 @@ import System.Posix.Types ( FileMode, EpochTime, UserID, GroupID
 
 
 -- | Phantom type for archive 'Ptr's.
-data Archive
+data PArchive
 -- | Phantom type for entry 'Ptr's.
-data Entry
+data PEntry
 -- | Phantom type for POSIX stat 'Ptr's.
-data CStat
+data CStat'
 -- | The base package doesn't contain an explicit int64_t.
 type CInt64 = CLLong
 
--- * 'Entry' creation and access
+-- * 'PEntry creation and access
 
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntry3>
 foreign import ccall "archive.h archive_entry_new"
-    archiveEntryNew :: IO (Ptr Entry)
+    archiveEntryNew :: IO (Ptr PEntry)
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntry3>
 foreign import ccall "archive.h archive_entry_free"
-    archiveEntryFree :: Ptr Entry -> IO ()
+    archiveEntryFree :: Ptr PEntry -> IO ()
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntry3>
 foreign import ccall "archive.h archive_entry_clear"
-    archiveEntryClear :: Ptr Entry -> IO (Ptr Entry)
+    archiveEntryClear :: Ptr PEntry -> IO (Ptr PEntry)
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryStat3>
 foreign import ccall "archive.h archive_entry_filetype"
-    archiveEntryFiletype :: Ptr Entry -> IO CMode
+    archiveEntryFiletype :: Ptr PEntry -> IO CMode
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryStat3>
 foreign import ccall "archive.h archive_entry_set_filetype"
-    archiveEntrySetFiletype :: Ptr Entry -> FileMode -> IO ()
+    archiveEntrySetFiletype :: Ptr PEntry -> FileMode -> IO ()
 
 -- | https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryPaths3
 foreign import ccall "archive.h archive_entry_pathname"
-    archiveEntryPathname :: Ptr Entry -> IO CString
+    archiveEntryPathname :: Ptr PEntry -> IO CString
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryPaths3>
 foreign import ccall "archive.h archive_entry_copy_pathname"
-    archiveEntryCopyPathname :: Ptr Entry -> CString -> IO ()
+    archiveEntryCopyPathname :: Ptr PEntry -> CString -> IO ()
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryStat3>
 foreign import ccall "archive.h archive_entry_size"
-    archiveEntrySize :: Ptr Entry -> IO CInt64
+    archiveEntrySize :: Ptr PEntry -> IO CInt64
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryStat3>
 foreign import ccall "archive.h archive_entry_set_size"
-    archiveEntrySetSize :: Ptr Entry -> CInt64 -> IO ()
+    archiveEntrySetSize :: Ptr PEntry -> CInt64 -> IO ()
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryPerms3>
 foreign import ccall "archive.h archive_entry_perm"
-    archiveEntryPerm :: Ptr Entry -> IO FileMode
+    archiveEntryPerm :: Ptr PEntry -> IO FileMode
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryPerms3>
 foreign import ccall "archive.h archive_entry_set_perm"
-    archiveEntrySetPerm :: Ptr Entry -> FileMode -> IO ()
+    archiveEntrySetPerm :: Ptr PEntry -> FileMode -> IO ()
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryTime3>
 foreign import ccall "archive.h archive_entry_mtime"
-    archiveEntryMtime :: Ptr Entry -> IO EpochTime
+    archiveEntryMtime :: Ptr PEntry -> IO EpochTime
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryTime3>
 foreign import ccall "archive.h archive_entry_mtime_nsec"
-    archiveEntryMtimeNsec :: Ptr Entry -> IO CLong
+    archiveEntryMtimeNsec :: Ptr PEntry -> IO CLong
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryTime3>
 foreign import ccall "archive.h archive_entry_set_mtime"
-    archiveEntrySetMtime :: Ptr Entry -> EpochTime -> CLong -> IO ()
+    archiveEntrySetMtime :: Ptr PEntry -> EpochTime -> CLong -> IO ()
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryPerms3>
 foreign import ccall "archive.h archive_entry_uid"
-    archiveEntryUid :: Ptr Entry -> IO UserID
+    archiveEntryUid :: Ptr PEntry -> IO UserID
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryPerms3>
 foreign import ccall "archive.h archive_entry_set_uid"
-    archiveEntrySetUid :: Ptr Entry -> UserID -> IO ()
+    archiveEntrySetUid :: Ptr PEntry -> UserID -> IO ()
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryPerms3>
 foreign import ccall "archive.h archive_entry_gid"
-    archiveEntryGid :: Ptr Entry -> IO GroupID
+    archiveEntryGid :: Ptr PEntry -> IO GroupID
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveEntryPerms3>
 foreign import ccall "archive.h archive_entry_set_gid"
-    archiveEntrySetGid :: Ptr Entry -> GroupID -> IO ()
+    archiveEntrySetGid :: Ptr PEntry -> GroupID -> IO ()
 
 
 -- * Archive reading
@@ -123,31 +123,31 @@ foreign import ccall "archive.h archive_entry_set_gid"
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveReadNew3>
 foreign import ccall "archive.h archive_read_new"
-    archiveReadNew :: IO (Ptr Archive)
+    archiveReadNew :: IO (Ptr PArchive)
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveReadFree3>
 foreign import ccall "archive.h archive_read_free"
-    archiveReadFree :: Ptr Archive -> IO CInt
+    archiveReadFree :: Ptr PArchive -> IO CInt
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveReadFilter3>
 foreign import ccall "archive.h archive_read_support_filter_all"
-    archiveReadSupportFilterAll :: Ptr Archive -> IO ()
+    archiveReadSupportFilterAll :: Ptr PArchive -> IO ()
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveReadFormat3>
 foreign import ccall "archive.h archive_read_support_format_all"
-    archiveReadSupportFormatAll :: Ptr Archive -> IO ()
+    archiveReadSupportFormatAll :: Ptr PArchive -> IO ()
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveReadOpen3>
 foreign import ccall "archive.h archive_read_open_filename"
-    archiveReadOpenFilename :: Ptr Archive -> CString -> CSize -> IO CInt
+    archiveReadOpenFilename :: Ptr PArchive -> CString -> CSize -> IO CInt
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveReadHeader3>
 foreign import ccall "archive.h archive_read_next_header2"
-    archiveReadNextHeader2 :: Ptr Archive -> Ptr Entry -> IO CInt
+    archiveReadNextHeader2 :: Ptr PArchive -> Ptr PEntry -> IO CInt
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveReadData3>
 foreign import ccall "archive.h archive_read_data"
-    archiveReadData :: Ptr Archive -> Ptr Word8 -> CSize -> IO CSsize
+    archiveReadData :: Ptr PArchive -> Ptr Word8 -> CSize -> IO CSsize
 
 -- | 'archive_eof' is returned only from 'archiveReadData' when you reach the
 -- end of the data in an entry or from 'archiveReadNextHeader2' when you
@@ -162,47 +162,47 @@ archive_eof = #const ARCHIVE_EOF
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveWriteNew3>
 foreign import ccall "archive.h archive_write_new"
-    archiveWriteNew :: IO (Ptr Archive)
+    archiveWriteNew :: IO (Ptr PArchive)
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveWriteFilter3>
 foreign import ccall "archive.h archive_write_add_filter_gzip"
-    archiveWriteAddFilterGzip :: Ptr Archive -> IO CInt
+    archiveWriteAddFilterGzip :: Ptr PArchive -> IO CInt
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveWriteFormat3>
 foreign import ccall "archive.h archive_write_set_format_pax_restricted"
-    archiveWriteSetFormatPaxRestricted :: Ptr Archive -> IO CInt
+    archiveWriteSetFormatPaxRestricted :: Ptr PArchive -> IO CInt
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveWriteOpen3>
 foreign import ccall "archive.h archive_write_open_filename"
-    archiveWriteOpenFilename :: Ptr Archive -> CString -> IO CInt
+    archiveWriteOpenFilename :: Ptr PArchive -> CString -> IO CInt
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveWriteHeader3>
 foreign import ccall "archive.h archive_write_header"
-    archiveWriteHeader :: Ptr Archive -> Ptr Entry -> IO CInt
+    archiveWriteHeader :: Ptr PArchive -> Ptr PEntry -> IO CInt
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveWriteData3>
 foreign import ccall "archive.h archive_write_data"
-    archiveWriteData :: Ptr Archive -> Ptr Word8 -> CSize -> IO CSsize
+    archiveWriteData :: Ptr PArchive -> Ptr Word8 -> CSize -> IO CSsize
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveWriteFree3>
 foreign import ccall "archive.h archive_write_close"
-    archiveWriteClose :: Ptr Archive -> IO CInt
+    archiveWriteClose :: Ptr PArchive -> IO CInt
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveWriteFree3>
 foreign import ccall "archive.h archive_write_free"
-    archiveWriteFree :: Ptr Archive -> IO CInt
+    archiveWriteFree :: Ptr PArchive -> IO CInt
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveReadDisk3>
 foreign import ccall "archive.h archive_read_disk_new"
-    archiveReadDiskNew :: IO (Ptr Archive)
+    archiveReadDiskNew :: IO (Ptr PArchive)
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveReadDisk3>
 foreign import ccall "archive.h archive_read_disk_set_standard_lookup"
-    archiveReadDiskSetStandardLookup :: Ptr Archive -> IO CInt
+    archiveReadDiskSetStandardLookup :: Ptr PArchive -> IO CInt
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveReadDisk3>
 foreign import ccall "archive.h archive_read_disk_entry_from_file"
-    archiveReadDiskEntryFromFile :: Ptr Archive -> Ptr Entry -> CInt -> Ptr CStat -> IO CInt
+    archiveReadDiskEntryFromFile :: Ptr PArchive -> Ptr PEntry -> CInt -> Ptr CStat' -> IO CInt
 
 
 -- * Errors
@@ -210,7 +210,7 @@ foreign import ccall "archive.h archive_read_disk_entry_from_file"
 
 -- | <https://github.com/libarchive/libarchive/wiki/ManPageArchiveUtil3>
 foreign import ccall "archive.h archive_error_string"
-    archiveErrorString :: Ptr Archive -> IO CString
+    archiveErrorString :: Ptr PArchive -> IO CString
 
 
 -- * Constants

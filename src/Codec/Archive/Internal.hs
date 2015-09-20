@@ -43,31 +43,31 @@ defaultBuffer = 64 * 1024
 
 -- | Call the correct @archiveWriteSetFormat*@ function.
 -- Throws 'ArchiveException' if this fails... somehow.
-setFormat :: Format -> Ptr Archive -> IO ()
+setFormat :: Format -> Ptr PArchive -> IO ()
 setFormat PaxRestricted ar = ensureSuccess ar =<< archiveWriteSetFormatPaxRestricted ar
 
 -- | Call the correct @archiveWriteAddFilter*@ function.
 -- Throws 'ArchiveException' if this fails... somehow.
-setCompression :: Compression -> Ptr Archive -> IO ()
+setCompression :: Compression -> Ptr PArchive -> IO ()
 setCompression Uncompressed _  = pure ()
 setCompression Gzip         ar = ensureSuccess ar =<< archiveWriteAddFilterGzip ar
 
 -- | @
 -- setFiletype t p = 'archiveEntrySetFiletype' p $ 'fromFiletype' t
 -- @
-setFiletype :: Filetype -> Ptr Entry -> IO ()
+setFiletype :: Filetype -> Ptr PEntry -> IO ()
 setFiletype t p = archiveEntrySetFiletype p $ fromFiletype t
 
 -- | @
 -- setPathname ap = 'withCString' ap . 'archiveEntryCopyPathname'
 -- @
-setPathname :: FilePath -> Ptr Entry -> IO ()
+setPathname :: FilePath -> Ptr PEntry -> IO ()
 setPathname ap = withCString ap . archiveEntryCopyPathname
 
 -- | 'archiveWriteData' the contents of an 'Fd' via the provided buffer.
 -- Throws 'ArchiveException' on archive write failure, 'IOException' on
 -- read failure.
-writeFileData :: Ptr Archive -> Fd -> Ptr Word8 -> CSize -> IO ()
+writeFileData :: Ptr PArchive -> Fd -> Ptr Word8 -> CSize -> IO ()
 writeFileData archive fd buf bufSize = void $ iterateUntilM (== 0) (doWrite >=> const doRead) =<< doRead
   where
     doWrite bytesRead = do
@@ -90,15 +90,15 @@ openReadOnlyFdNoFollow str = do
 
 -- | Open an on-disk archive with any support compression or format using
 -- 'defaultBuffer'. Throws 'ArchiveException' on open failure.
-openDiskArchive :: Ptr Archive -> FilePath -> IO ()
+openDiskArchive :: Ptr PArchive -> FilePath -> IO ()
 openDiskArchive ar fp = do
     archiveReadSupportFilterAll ar
     archiveReadSupportFormatAll ar
     withCString fp $ \cfp ->
         ensureSuccess ar =<< archiveReadOpenFilename ar cfp (64 * 1024)
 
--- | Populate an 'EntryStat' with metadata from an 'Entry'.
-readEntry :: Ptr Entry -> IO (EntryStat ())
+-- | Populate an 'EntryStat' with metadata from a 'PEntry'.
+readEntry :: Ptr PEntry -> IO (EntryStat ())
 readEntry ent = do
     ap     <- peekCString =<< archiveEntryPathname ent
     len    <- archiveEntrySize ent
@@ -109,8 +109,8 @@ readEntry ent = do
     ftype  <- toFiletype <$> archiveEntryFiletype ent
     pure $ EntryStat ap ftype uid' gid' perm' mtime' len ()
 
--- | Set metadata from the 'EntryStat' to the 'Entry'.
-setEntry :: Ptr Entry -> EntryStat a -> IO ()
+-- | Set metadata from the 'EntryStat' to the 'PEntry'.
+setEntry :: Ptr PEntry -> EntryStat a -> IO ()
 setEntry entry stat = do
     setPathname (archivePath stat) entry
     archiveEntrySetSize entry (entryLength stat)
@@ -129,17 +129,17 @@ isEof = (== archive_eof)
 -- | @
 -- ensureSuccess a = 'void' . 'ensuringSuccess' a
 -- @
-ensureSuccess :: Ptr Archive -> CInt -> IO ()
+ensureSuccess :: Ptr PArchive -> CInt -> IO ()
 ensureSuccess a = void . ensuringSuccess a
 
 -- | Throw an 'ArchiveException' with libarchive error details if the result
 -- was negative. Use like @ensuringSuccess archive =<< archiveFFICall archive foo@.
-ensuringSuccess :: (Num r, Ord r) => Ptr Archive -> r -> IO r
+ensuringSuccess :: (Num r, Ord r) => Ptr PArchive -> r -> IO r
 ensuringSuccess a v
     | v >= 0    = pure v
     | otherwise = throwArchiveException a
 
-throwArchiveException :: Ptr Archive -> IO a
+throwArchiveException :: Ptr PArchive -> IO a
 throwArchiveException archive = do
     pstr <- archiveErrorString archive
     str <- peekCString pstr

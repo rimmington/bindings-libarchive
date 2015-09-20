@@ -37,8 +37,9 @@ import System.Posix.IO (closeFd)
 import System.Posix.Types (Fd (Fd))
 
 -- TODO: move to Simple, use Free?
+-- TODO: mark as writing or reading
 -- | The tiniest abstraction.
-newtype ArchivePtr = AP (Ptr Archive)
+newtype ArchivePtr = AP (Ptr PArchive)
 
 -- | Run some action with a new archive on disk.
 withWriteArchive :: Format -> Compression -> FilePath -> (ArchivePtr -> IO a) -> IO a
