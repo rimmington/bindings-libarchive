@@ -37,6 +37,8 @@ import System.Posix.Internals (c_open)
 import System.Posix.IO (fdReadBuf)
 import System.Posix.Types (Fd (..))
 
+-- TODO: rename to Utils?
+
 -- | 64k is enough for anyone.
 defaultBuffer :: CSize
 defaultBuffer = 64 * 1024

@@ -52,8 +52,7 @@ withWriteArchive format comp path f = bracket archiveWriteNew archiveWriteFree g
         pure r
 
 -- TODO: writeArchiveFiles?
--- TODO: do sockets need to be handled specially? actool does so.
--- | Add an on-disk file to the archive.
+-- | Add an on-disk file to the archive. Doesn't check if you're adding eg. a socket.
 addFromDisk :: ArchivePtr
             -> FilePath   -- ^ The on-disk path
             -> FilePath   -- ^ The archive path

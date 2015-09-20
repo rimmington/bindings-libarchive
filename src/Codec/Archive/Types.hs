@@ -45,7 +45,7 @@ data Compression = Uncompressed | Gzip
 data Format = PaxRestricted deriving (Show, Eq)
 
 -- | Types of files that could be archived.
-data Filetype = Socket | SymbolicLink | RegularFile | BlockDevice | Directory
+data Filetype = SymbolicLink | RegularFile | BlockDevice | Directory
               | CharacterDevice | FIFO | Unknown CMode
               deriving (Show, Eq)
 
@@ -68,7 +68,6 @@ data EntryStat = EntryStat { archivePath :: FilePath
 -- with a stat call (plus, the libarchive constants may not match your C libs).
 toFiletype :: CMode -> Filetype
 toFiletype mode
-    | mode == ae_ifsock = Socket
     | mode == ae_iflnk  = SymbolicLink
     | mode == ae_ifreg  = RegularFile
     | mode == ae_ifblk  = BlockDevice
@@ -79,7 +78,6 @@ toFiletype mode
 
 -- | Turn a 'Filetype' into a value ready for writing to an archive.
 fromFiletype :: Filetype -> CMode
-fromFiletype Socket          = ae_ifsock
 fromFiletype SymbolicLink    = ae_iflnk
 fromFiletype RegularFile     = ae_ifreg
 fromFiletype BlockDevice     = ae_ifblk
